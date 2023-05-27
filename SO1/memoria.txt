@@ -1,0 +1,35 @@
+-- MEMORIA --
+
+Normalmente, asumimos que las operaciones de cada procesador se realizan en el orden especificado, 
+y que los stores son inmediatamente visibles a los demás procesadores. 
+Sin embargo, en sistemas MULTIPROCESADOR modernos se implementa store-buffering y reordering, 
+lo cual contradice lo previamente asumido. Dichos problemas surgen en tiempo de ejecución.
+
+-- REORDERING: 
+Puede ocurrir que algunas instrucciones se hagan antes de lo estipulado en el codigo, si la CPU se 
+encuentra bloqueada para seguir el pipeline secuencialmente. Por otro lado, no todos los reordenamientos
+son permitidos, y esto depende de las reglas de cada arquitectura. En x86/64, por ejemplo, se garantiza
+que los únicos reordenamientos posibles son mover loads antes que stores, es decir, lecturas de memoria
+antes que escrituras a memoria, siempre y cuando las direcciones de memoria sean diferentes.
+
+-- STORE BUFFERING:
+Los sistemas multiprocesador, no garantizan que sus cachés sean consistentes. Esto significa que cuando
+un procesador escribe en una dirección a memoria, esto no es inmediatamente visible a los demás procesadores.
+
+Un método para lidiar con estos efectos es usar barreras de memoria (fences). Un fence causa que la CPU
+no reordene instrucciones a través del mismo, es decir, separa en dos bloques las lineas de código previas
+a la instrucción y posteriores. Además, garantiza que todas las escrituras previas al fence son visible a
+todos los procesadores antes de continuar con el pipeline de instrucciones.
+
+Para implementar una barrera de memoria, podemos utilizar la función asm("mfence"), que inserta en el código
+la instrucción mfence.
+
+-- OPTIMIZACIONES DEL COMPILADOR
+En general, el compilador asume que las variables no cambian espontáneamente, y por esto, muchas veces está
+autorizado a optimizar asignaciones que pueden traer problemas en el programa. Dichas optimizaciones, al 
+contrario de los problemas de store buffering y reordering, surgen en tiempo de compilación, antes de correr
+el programa. 
+
+Para evitar esto, se usa la palabra reservada VOLATILE. La misma le dice al compilador que la variable puede cambiar
+espontáneamente, sin acción del programa. Entonces, si una variable es declarada volatile, hay optimizaciones
+que no están permitidas.

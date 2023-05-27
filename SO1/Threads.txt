@@ -1,0 +1,67 @@
+-- THREADS --
+
+Los procesos se pueden clasificar en dos tipos diferentes, los procesos pesados y los procesos
+livianos. Como vimos anteriormente, los procesos pesados (o procesos normales) requieren un contexto
+que se almacena en el PCB, y contiene toda la información necesaria para que este sea ejecutado en la CPU.
+Sin embargo, al cambiar constantemente de proceso, hay tiempo de cómputo que se pierde ya que la acción de cambiar
+de contexto es bastante costosa para la CPU.
+Los threads (hilos, hebras), también llamados PROCESOS LIVIANOS, son la unidad básica de utilización de la CPU, y 
+Consisten de un PC, una serie de registros y un espacio de stack. Entre hilos de un mismo proceso, se comparte la sección
+de texto, la sección de data y los recursos del sistema operativo que se estén utilizando en el proceso generador de estos hilos. 
+Todo este conjunto se conoce como TAREA.
+Un proceso pesado (o proceso normal) es una TAREA con un solo hilo. Una TAREA sin hilos no hace nada y un hilo puede estar en 
+solamente una tarea.  
+El hecho que los hilos comparten tanto hace que se aliviane muchísimo la carga de la CPU tanto al crear threads,
+ya que no debe realizar una copia de la memoria (como en procesos pesados) como al cambiar de thread a ejecutar, ya que el cambio de contexto
+solo requiere un cambio del conjunto de registros utilizados, que es mucho menor que un cambio de contexto de procesos pesados.
+
+
+-- Ventajas de la programación con múltiples threads
+
+1. Capacidad de respuesta: En aplicaciones interactivas, el uso de hilos puede permitir que se continúen ejecutando funcionalidades de la 
+			   aplicación mientras otras partes están bloqueadas o estén realizando operaciones largas.
+
+2. Compartición de recursos: Los threads de un mismo proceso comparten la memoria y los recursos del proceso que los generó. Esto trae la ventaja
+			     de que una misma aplicación posea distintos hilos para distintas actividades dentro del mismo espacio de direcciones.
+
+3. Economía: Dado a que los hilos comparten muchos recursos, no es necesario crear o copiar los recursos para cada thread creado (como pasa con los 
+	     procesos). Por esto, es más económico  crear y realizar cambios de contexto entre hilos
+
+4. Utilización sobre arquitecturas multiprocesador: La implementación de threads se ve muy potenciada cuando se utilizan varios procesadores, ya que
+						    se pueden ejecutar distintos hilos en paralelo en los distintos procesadores.
+						   
+
+-- Tipos de Hilos
+
+Desde el punto de vista práctico, se pueden identificar dos tipos diferentes de hilos: Los HILOS DEL USUARIO y los HILOS DEL KERNEL.
+Los HILOS DE USUARIO se proporcionan por encima del kernel, y se soportan sin soporte del mismo. El hilo solo necesita un stack y un PC, no necesita
+ningún recurso del kernel, y el kernel tampoco se encarga de administrar y planificar la ejecución de estos hilos. Esto produce que el cambio de contexto
+entre los hilos sea altamente veloz. Sin embargo una llamada al sistema puede llegar a retrasar la ejecución ya que el kernel planifica los procesos y como
+son hilos de usuario, son invisibles para el kernel, así que este solo identifica un único proceso, por lo que no puede paralelizar la ejecución.
+
+Los HILOS DEL KERNEL tienen solamente una única estructura de datos chica y un stack. El cambio de contexto no requiere un cambio de la información de acceso a memoria
+por lo que es relativamente rápido. Sin embargo, el cambio se realiza mediante una interrupción del kernel, lo que puede consumir más tiempo que los hilos de usuario.
+
+Por ahora, nos concentraremos en la especificación de hilos del kernel.
+
+Para operar sobre hilos tenemos a disposición las siguientes funciones:
+
+- pthread_create(pthread_t *thread, conts_t pthread_attr_r *attr, void* (*func)(void*), void* arg)
+	Esta función crea un nuevo hilo en el proceso llamante
+
+- pthread_join(pthread_t thread, void** retval): El proceso llamante de esta función espera a que el thread especificado termine
+
+- pthread_exit() : Termina el thread llamante y devuelve un valor determinado.
+
+
+-- Comunicación entre Threads
+
+Como vimos en la comunicación entre procesos, podemos comunicar dos procesos mediante memoria compartida. Este método es el que se utiliza
+para la comunicación entre hilos. Podemos aprovechar que los hilos comparten gran parte de recursos entre ellos (En particular, la memoria)
+para poder llevar una gran cantidad de datos compartidos, de modo que todos los hilos "hermanos" pueden acceder y modificar a estas variables.
+Sin embargo, este método conlleva muchos problemas de concurrencia y habrá que aplicar distintas herramientas y algoritmos para evitarlos.
+
+-- BIBLIOGRAFÍA
+-- Operating Systems Concepts (quinta edición), capítulo 4- Silberschatz, Galvin.
+-- Operating Systems Concepts (séptima edición), capítulo 4- Silberschatz, Galvin.
+-- Slides de la cátedra (Sincronización)

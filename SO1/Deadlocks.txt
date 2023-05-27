@@ -1,0 +1,55 @@
+-- DEADLOCK --
+
+-- definición --
+Un DEADLOCK es una situación que ocurre cuando dos o más procesos poseen determinados recursos
+y cada uno queda DETENIDO, a la espera de alguno de los que tiene el otro. En este caso ninguno
+de los procesos involucrados puede avanzar.
+Este problema contradice la segunda condición de solución para problemas de condición
+de carrera (progreso)
+
+- Starvation problem
+Situación en la que un proceso NO puede avanzar en su ejecución dado que necesita recursos que 
+están alternativamente asignados a otros procesos. 
+Este problema contradice la tercer condición de solución para problemas de condición de 
+carrera (espera limitada)
+ 
+-- Condiciones necesarias para la existencia de DEADLOCKS 
+
+Existen 4 condiciones necesarias para la ocurrencias de DEADLOCKS, es decir que estas cuatro
+condiciones deben existir simultáneamente para que haya deadlock.
+
+ 1. Exclusión Mutua: Al menos un recurso pertenece a una sección crítica, es decir un solo proceso
+ 	             puede utilizarlo a la vez.
+ 	             
+ 2. Mantener y Esperar: Debe existir un proceso que esté reteniendo al menos un recurso y esperando
+ 		        para adquirir recursos adicionales que están siendo retenidos por otros procesos.
+ 
+ 3. Sin desalojo: No hay desalojo de recursos, es decir que para que un recurso se libere, el proceso
+                  que lo esté utilizando debe liberarlo VOLUNTARIAMENTE luego de haber terminado de utilizarlo.
+                  
+ 4. Espera circular: Se tienen n  recursos (p1,p2, ... ,pn) y los procesos pi necesitan el recurso que tiene el 
+ 		     proceso p(i+1). De este modo, el proceso p1 tiene el recurso del proceso pn y 
+ 		     necesitan el del proceso p2.
+ 		     
+Solucionar cualquiera de ellas implica liberar al programa de deadlocks sobre ese recurso.
+
+-- Métodos para manejar deadlocks
+
+ 1. Prevención: Modelar el comportamiento del sistema para que elimine toda posibilidad para que no se produzca 
+ 		un bloque. Es una implementación SUBÓPTIMA. Se restringen los modos en los que se pueden
+ 		realizar las solicitudes.
+ 
+ 2. Evasión: Busca imponer condiciones menos estrictas que en la prevención para intentar una mejor utilización de 	     
+ 	     los recursos. Requiere que el sistema operativo sepa de antemano qué recursos solicitara y 
+ 	     utilizará un proceso durante su tiempo de ejecución. 
+ 	     
+ 3. Deteccion y recuperacion: El sistema permite que ocurran los bloqueos, pero busca determinar si ha ocurrido y 
+ 			      tomar medidas para eliminarlos.
+ 			   
+ 4. Ignorar el problema:  El sistema no tiene ninguno de los métodos anteriormente descritos. Esto producirá que los
+ 			  procesos entrarán en deadlock pero el sistema ni siquiera se enterara y consumirán
+ 			  cada vez más recursos. Esto llevará a un deterioro del rendimiento del sistema y eventualmente
+ 			  dejará de funcionar y solo será solucionado mediante un reinicio manual.
+ 			  
+-- 
+

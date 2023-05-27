@@ -1,0 +1,116 @@
+-- COMUNICACIÓN ENTRE PROCESOS (IPC) --
+
+Para lograr la cooperación entre procesos, debemos, de alguna manera, mantener a los procesos comunicados.
+Para esto, podemos utilizar dos métodos complementarios de comunicación: MEMORIA COMPARTIDA, y SISTEMAS DE MENSAJES.
+
+El método de memoria compartida, requiere que dos procesos intercomunicados compartan variables, y la responsabilidad
+de este uso para compartir variables cae sobre el programador, el SO solo provee la memoria compartida en sí.
+Este método es el utilizado en threads (hilos, hebras) y puede traer ciertos problemas (que se verán más adelantes)
+
+El método de los sistemas de mensajes permite que dos procesos (o más) compartan mensajes que llevan la información a compartir.
+La responsabilidad de mantener esta comunicación ahora recae sobre el SO.
+En estos métodos caen las distintas herramientas como señales, pipes y sockets. (También están los RPC y los messages queues)
+
+Estos métodos NO son mutuamente excluyentes, se pueden utilizar en simultáneo en un mismo SO.
+
+Veamos en detalle las distintas herramientas que poseemos para mandar mensajes entre procesos:
+
+-- Señales
+
+Las señales son INTERRUPCIONES producidas por un proceso o por el SO y sirven para identificar un evento.
+También se pueden producir por fallos de hardware.
+Se dice que una señal es GENERADA en el momento que son producidas y ENTREGADAS cuando el proceso que las recibe
+actúa sobre ellas.
+Una señal puede generar 5 tipos de efectos sobre un proceso:
+ 1. Term: Termina la ejecución del proceso.
+ 2. Ign: La señal se ignora.
+ 3. Core: Termina el proceso y genera un core dump.
+ 4. Stop: Frena el proceso (no lo termina, lo pausa)
+ 5. Cont: Continua un proceso frenado.
+
+Para poder capturar y mandar señales contamos con algunas funciones 
+- signal(): captura una señal y propone una función manejadora para manejar la señal
+- kill(): envía una señal a un proceso determinado (mediante su PID)
+- sigaction(): examina o cambia la acción de una señal
+
+Hay algunas señales que NO pueden ser capturadas y SIEMPRE tienen efecto. Estas son:
+- SIGKILL: Produce que un proceso finalice inmediatamente. 
+- SIGSTOP: Indica al S0 que detenga un proceso para su posterior reanudación
+
+-- Pipes
+
+Los pipes son un sistema de comunicación entre procesos mediante mensajes.
+Un pipe es una estructura UNIDIRECCIONAL, como una tubería con una entrada y una salida.
+Dos procesos conectados con un pipe pueden intercambiar mensajes entre ellos, el proceso que mandara mensajes
+por ese pipe debe cerrar el extremo de lectura, y el proceso que recibe mensajes por el pipe deberá cerrar el extremo
+de escritura.
+Los pipes no soportan broadcast, es decir no pueden enviar mensajes a varios procesos al mismo tiempo
+
+Para crear pipes entre procesos utilizamos la función:
+- pipe(int pipefd[2], int flags) (o pipe2()): Crea un pipe entre dos procesos, el array pipefd refiere a los file descriptors
+de los extremos del pipe, pipefd[0] refiere al extremo de lectura y pipefd[1] al extremo de escritura.
+
+
+-- Sockets
+
+Los sockets son medios de comunicación GENERALIZADOS. En los pipes, por ejemplo, la comunicación solo se podía lograr mediante 
+procesos relacionados (padres e hijos), sin embargo, los sockets permiten comunicar a procesos no necesariamente relacionados,
+hasta pueden darse conexiones entre procesos en distintas computadoras.
+Al igual que un pipe, un socket se representa con un file descriptor.
+
+Para la creación de sockets, utilizamos la siguiente función:
+
+- socket(int domain, int type, int protocol): Devuelve el file descriptor que representa al socket creado
+
+Veamos en detalle los argumentos necesarios para especificar a un socket.
+* Dominio (domain)
+	El dominio especifica al socket que tipo de conexión (local o red) utilizará
+	Algunos dominios que podemos utilizar son: - Local: AF_UNIX, AF_LOCAL	
+					           - Red: AF_INET, AF_INET6
+
+* Tipo (type)
+	El tipo indica qué tipo de comunicación utilizaremos. Estos pueden ser DATAGRAMAS o STREAMS
+	Para utilizar DATAGRAMAS (conexión UDP (User datagram protocol)) usaremos el tipo SOCK_DGRAM. Esta conexión es una conexión no 
+	confiable, ya que no se asegura que el mensaje enviado haya llegado. Se manda un mensaje a la vez, que se convierten en paquetes.
+	Dado que los sockets orientados a datagramas no requieren una conexión continua con los procesos, cada paquete debe contener
+	la dirección del proceso a los cuales están dirigidos (como una carta).
+	Para utilizar sockets del tipo STREAM (conexion TCP (Transmission Control Protocol)) usamos el tipo SOCK_STREAM. Esta conexión es
+	una conexión CONFIABLE y orientada a la conexión. Esto garantiza que todos los mensajes enviados lleguen al destinatario correctamente
+	y en el orden que fueron enviados.
+
+* Protocolo (protocol)
+	Depende de los argumentos anteriores, en general no lo especificamos.
+
+Con la función socket() creamos sockets, pero para usarlos hay que CONECTARLOS, para esto tenemos las siguientes funciones:
+
+- socketpair():  Crea un par de sockets sin nombre conectados en el dominio y tipo usando el protocolo indicado.
+		 Crea una estructura parecida a un pipe, un array de dos file descriptors (sockets). Sin embargo no es unidireccional,
+		 sino que es bidireccional. 
+- bind(): Asigna un nombre a un socket, esto necesario para poder realizar una conexión a ese socket.	 
+- send() (sendto()): Manda un mensaje al socket especificado, para sockets conectados. Su versión sendto() sirve para conexiones orientadas
+		     a datagramas.
+- recv() (recvfrom()): Recibe un mensaje del socket especificado, para sockets conectados. Su versión recvfrom() sirve para conexiones orientadas
+		       a datagramas.
+
+-- Sistemas CLIENTE-SERVIDOR
+
+La implementación de estos sistemas se logra mediante la utilización de sockets.
+La idea principal es lograr crear un proceso servidor que "atienda" los pedidos de distintos procesos "clientes" que se conecten.
+Para esto se toma un acercamiento de comunicación orientada a la conexión. Para esto definimos distintos estados para cada proceso.
+Por un lado el servidor, debe primero iniciar un socket y asignarle un nombre mediante un bind. Este será el socket de conexión entre los 
+clientes y el servidor. Luego, el servidor se pone en modo escucha (listen).
+Por otro lado, el cliente debe crear su socket e intentar conectarse al socket del servidor (connect). Luego, el servidor debe aceptar (accept)
+la conexión. Si lo hace, se forma una conexión exitosa y ambos procesos pueden intercambiar datos.
+Cuando se quiere terminar la conexión, se deben cerrar los sockets (close).
+
+Las funciones utilizadas para esto son:
+
+- listen(): Hace que el socket indicado se transforme en un socket pasivo, que esperara aceptar alguna conexión.
+- accept(): Acepta una conexión entrante y crea la conexión en sí. La función bloquea al proceso llamante hasta que se presente alguna conexión.
+- connect(): Conecta el socket indicado con la dirección especificada.
+
+-- BIBLIOGRAFÍA
+-- Operating Systems Concepts (quinta edición), capítulo 4- Silberschatz, Galvin.
+-- Operating Systems Concepts (séptima edición), capítulo 3- Silberschatz, Galvin.
+-- Slides de la cátedra (IPC, Sockets)
+

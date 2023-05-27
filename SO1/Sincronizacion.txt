@@ -1,0 +1,190 @@
+-- SINCRONIZACIÓN ENTRE PROCESOS –
+
+Al ejecutar procesos concurrentes y comunicarlos mediante el método de memoria compartida, se pueden generar problemas de concurrencia, es decir, 
+que varios procesos manipulen y accedan a los mismos datos al mismo tiempo. Para protegerse de estos problemas, se deben sincronizar de alguna 
+manera los procesos cooperativos. Los procesos deberán compartir memoria, ya sea mediante una dirección lógica o mediante archivos. 
+El acceso concurrente a estos datos puede resultar en inconsistencias, causando el mal funcionamiento del programa. 
+Dentro de esta sincronización, podemos encontrar dos posibles comportamientos:
+
+- COMPETENCIA: Los procesos compiten por un mismo recurso, compiten para ejecutar una instrucción,
+	       pero solo UNO puede hacerlo.
+
+- COOPERACIÓN: Los procesos trabajan en conjunto (cooperan) para poder llegar a un resultado.
+
+
+-- Condición de Carrera
+
+Se conoce como CONDICIÓN DE CARRERA a la categoría de errores de programación que involucra a dos (o más)
+procesos que fallan al comunicarse su estado mutuo, causando inconsistencias en los datos.
+
+-- Operacion Atomica
+
+Manipulación de datos que requiere la garantía de que se ejecuta como UNA SOLA OPERACIÓN, sin estados parciales
+observables por otro proceso.
+
+-- Sección Crítica
+
+En un conjunto dado de procesos, cada procesos puede tener lo que se llama SECCIÓN CRÍTICA, que es una 
+parte del código en el cual se interactúa con la memoria que este proceso comparte con los demás, 
+ya sea leyendo o escribiendo. Para evitar problemas de concurrencia debemos intentar lograr que estas
+secciones de código sean ATÓMICAS, es decir que mientras un proceso esté accediendo a ese lugar en la memoria,
+ningún otro proceso podrá hacerlo. Haciendo a la sección crítica del proceso MUTUAMENTE EXCLUYENTE (mutex)
+con los demás procesos.
+
+Un algoritmo que proponga una solución para el problema de la sección crítica debe cumplir con los siguientes
+requerimientos:
+
+- Exclusión Mutua: Si un proceso Pi está ejecutando su sección crítica, ningún otro proceso puede estar ejecutando
+		   su sección crítica.
+
+- Progreso: Si ningún proceso está ejecutando su sección crítica, y algunos procesos desean entrar a su sección crítica
+            correspondiente, entonces solo los procesos que no estén ejecutando sus secciones críticas restantes pueden
+	    participar en la decisión de qué procesos será el siguiente en entrar, y esta selección NO puede ser pospuesta
+	    indefinidamente.
+
+- Espera limitada: Existe un límite en el número de veces que otros procesos pueden acceder a su sección crítica después que
+		   algún otro proceso haya solicitado entrar a su propia sección crítica y antes de que esta haya sido concedida.
+
+
+-- Estructura general de un proceso Pi
+
+      do {
+      
+        | sección de entrada |
+		sección crítica
+	| sección de salida |
+		sección restante
+
+	} while( True );
+      
+-- Algoritmo de Peterson
+
+El algoritmo de Peterson intenta resolver el problema de la sección crítica para dos procesos concurrentes.
+Para esto, se introducen dos variables globales, un array de dos elementos booleanos (flag) y una variable entera del turno.
+tal que se definen como: int flag[2] y int turno, tales que flag se inicializa en todo False y turno en 0.
+La variable turno, indica el turno del proceso al que le corresponde entrar a la sección crítica (0 para el proceso 0
+y 1 para el proceso 1), mientras que el array flag indica la intención de cada proceso para entrar a la sección crítica
+(True si hay intención, False si no)
+Sean entonces los procesos P0 y P1 tales que su estructura es la siguiente:
+
+-- Pi -- donde i = 1,0  y j = 1 - i
+
+do {
+
+   flag[i] = True;
+   turno = j;
+   while( flag[j] && turno == (j));
+
+   */ sección crítica /*
+
+   flag[i] = False;
+     
+} while(True);
+
+Se puede probar que el algoritmo de Peterson resuelve el problema de la sección crítica y cumple los
+3 puntos. (Ver demostración)
+
+-- Algoritmo de Lamport (panaderia)
+
+El algoritmo de Lamport propone una solución al problema de la sección crítica para una cantidad n de procesos
+concurrentes. Para esto, se piensa en la solución como un sistema de turnos, como en una panadería. Cada proceso
+que quiera entrar a la sección crítica es asignado un número de turno. El proceso con turno menor es el que puede
+entrar a la sección crítica. El algoritmo puede llegar a repartir el mismo número a dos procesos distintos, en este caso
+se decide por el proceso con PID más chico.
+Veamos cómo funciona el algoritmo de Lamport para N procesos.
+De este modo, se definen las variables necesarias para el algoritmo, estas son:
+-Un array de N valores booleano que llamaremos eligiendo (int eligiendo[N]), este array llevara el estado de elección de cada
+ proceso, es decir si eligiendo[i] = True, luego el proceso Pi está eligiendo un turno
+-Un array de N valores enteros, que llamaremos "turno" (int turno[N]) será el array de todos los turnos asignados, tal que si 
+ turno[i] = m es decir que el turno del proceso Pi es m
+
+-- Pi --
+
+do {
+   
+   eligiendo[i] = True;
+   turno[i] = max(turno) + 1;
+   eligiendo[i] = False;
+
+   for(int j = 0; j < N; j++)
+	
+	while(eligiendo[j]);
+        while(turno[j] != 0 && (turno[j] < turno[i] || j < i));
+
+	*/ sección crítica /*
+
+	turno[i] = 0;
+
+} while(True);
+
+En si, podemos resumir a todos los algoritmos que manejan el problema de la sección crítica con un formato del siguiente estilo:
+
+do {
+	| LOCK |
+	
+	*/ sección crítica /*
+
+	| UNLOCK |
+
+} while(True);
+
+Para implementar estos LOCK y UNLOCK de la sección tenemos varias opciones:
+
+-- Locks de la librería PTHREAD
+
+- pthread_mutex_t : Es el tipo reservado para mutexes. 
+- pthread_mutex_init(): Inicializa el mutex (se puede reemplazar por la macro PTHREAD_MUTEX_INITIALIZER)
+- pthread_mutex_lock(): Bloquea la zona de exclusión mutua, es decir, la porcion de codigo por debajo de la llamada
+			de esta función. Si ningún otro hilo bloqueo la zona, entonces el hilo llamante puede entrar
+			y ejecutar el código. Si el mutex ya fue bloqueado por algún otro hilo, el hilo llamante
+			queda bloqueado hasta que se vuelva a liberar el mutex.
+- pthread_mutex_unlock(): Desbloquea el mutex.
+- pthread_mutex_trylock(): Esta función es equivalente a "pthread_mutex_lock()", sin embargo, si el mutex ya estaba bloqueado
+			   previamente por otro proceso, la función retorna inmediatamente.
+-pthread_mutex_destroy(): Destruye un mutex
+
+-- Variables de condición de la librería PTHREAD
+
+- pthread_cond_t : Es el tipo reservado para variables de condición.
+- pthread_cond_init(): Inicializa una variable de condición.
+- pthread_cond_destroy(): Destruye una variable de condición.
+- pthread_cond_wait(pthread_cond_t *cv, pthread_mutex_t *mutex): La función bloquea el proceso hasta la activación de la variable
+								 de condición y libera el mutex que el proceso había bloqueado previamente.
+								 El funcionamiento es el siguiente:
+									- Primero, el proceso posee un mutex, es decir ha hecho un lock previo.
+									- Luego, entra en el wait de la variable de condición, donde el lock de libera
+									  con un unlock, y queda disponible para que otro proceso lo tome. El proceso
+								          se queda bloqueado.
+									- En el momento en el que se activa la variable de condición, todos los procesos
+									  que se despierten (del wait) compiten por conseguir el lock.
+- pthread_cond_signal(pthread_cond_t *cv): La función despierta a AL MENOS un proceso que esté bloqueado por 
+					   la variable de condición.
+- pthread_cond_broadcast(pthread_cond_t *cv): La función despierta a TODOS los procesos bloqueados por la variable de condición.
+
+-- SEMÁFOROS
+
+Los semáforos son una herramienta capaz de solucionar varios problemas de sincronización de procesos
+entre ellos, el problema de la condición de carrera. En particular, la especificación de los semáforos es la siguiente:
+Un semáforo es un contador entero que es inicializado en un valor arbitrario mayoy o igual a 0. Sobre este semáforo
+se pueden realizar dos operaciones, que deben ser ATÓMICAS, éstas son: signal (post) y wait (wait)
+La operación signal incrementa el contador del semáforo en uno.
+La operación wait realiza dos posibles acciones. Si el contador del semáforo es un número mayor a 0, entonces decrementa
+el contador en uno. Si el contador del semáforo es 0, entonces la wait bloquea al proceso llamante hasta que el contador del 
+semáforo vuelva a ser incrementado.
+La implementación de estos semáforos de POSIX es el siguiente:
+
+- sem_ t : Es el tipo reservado para semáforos.
+- sem_init(sem_t *sem, int pshared, int value): Inicializa un semáforo, si el argumento "pshared" es 0, el semáforo se comparte
+						entre threads, sino se comparte entre procesos. El argumento value indica el valor
+						inicial del semáforo (debe ser mayor a 0)
+- sem_destroy(sem_t *sem): Destruye un semáforo
+- sem_wait(sem_t *sem): Realiza una operación wait sobre el semáforo indicado.
+- sem_post(sem_t *sem): Realiza una operación signal sobre el semáforo indicado.
+
+--
+
+Cabe destacar que las operaciones bloqueantes de todas estas implementaciones de locks y mutexes, no caen en el problema del
+BUSY WAITING, que se da cuando un proceso está continuamente ciclando una condición (con un while por ejemplo) esperando a que
+esto se cumpla. El busy waiting mantiene al proceso vivo y por lo tanto consumiendo energía de la CPU. Los bloqueos propuestos 
+por estas funciones NO mantienen al proceso vivo, sino que lo duermen, permitiendo que la CPU ejecute otros procesos y alivianando 
+su carga.

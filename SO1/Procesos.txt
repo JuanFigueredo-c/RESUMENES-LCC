@@ -1,0 +1,79 @@
+-- PROCESOS --
+
+*definición*
+
+Un PROCESO es un programa en EJECUCIÓN. Un proceso, a lo largo de su vida (ejecución)
+cambia constantemente de ESTADO. El estado de un proceso puede ser:
+ - Nuevo: El proceso está siendo creado
+ - Listo: EL proceso ya está creado, esta esperando ser asignado a un procesador
+ - Ejecución: El proceso está siendo ejecutado
+ - Bloqueado: El proceso está esperando algún evento (usualmente I/O o una señal)
+ - Terminado: El proceso terminó de ejecutarse
+ - Zombie: el proceso ha terminado su ejecución, pero el sistema operativo debe realizar ciertas operaciones 
+           de limpieza para poder eliminarlo de la lista (notificar al proceso padre, liberar memoria, etc)
+	   Si el padre nunca espera el resultado y termina su ejecución, entonces el proceso INIT se 
+           encarga de recuperar los datos de terminación de los procesos y liberar su memoria	
+
+En los procesos hijos, ocurre que cuando el padre termina su ejecución sin haber esperado a que 
+los hijos terminen. Cuando esto ocurre, se asigna como padre del proceso al proceso INIT que "recogerá"
+al hijo cuando este termine.
+
+Los procesos, son representados en el sistema operativo con un 
+BLOQUE DE CONTROL DE PROCESO (process control block "PCB"). Cuando un proceso
+se crea, se genera un PCB de dicho proceso, que contiene toda la información
+necesaria para que este sea ejecutado correctamente. Esta info es:
+ 
+  - Estado del Proceso
+  - Número del proceso (process number "PID")
+  - Registros de la CPU
+  - Información de la memoria (que el proceso está utilizando)
+  - Lista de archivos abiertos (archivos I/O)
+
+Cada vez que el sistema operativo cambia de proceso, debe guardar el contexto
+actual del proceso que estaba ejecutando en su PCB y recargar el PCB del proceso
+a ejecutar.
+Esta acción no es trivial, el cambio de contexto requiere mucho esfuerzo por parte
+del CPU y es importante notar que mientras se esté cambiando el contexto, no se pueden
+ejecutar ningún otro proceso concurrentemente, por lo que es un "tiempo perdido" de esa CPU.
+
+El objetivo de la MULTIPROGRAMACIÓN es poder tener procesos corriendo en todo momento, para
+maximizar la utilización de la CPU. Para lograr esto, se deben alternar los procesos activos 
+con la mayor frecuencia posible para que el usuario sea capaz de interactuar con cada programa 
+mientras esté activo.
+
+-- Procesos Concurrentes --
+
+*definición*
+
+Se dice que dos procesos son CONCURRENTES si comparten (en algún momento) un tiempo de vida.
+Esto no quiere decir que se están ejecutando simultáneamente.
+
+Mediante el uso de distintas operaciones sobre procesos, podemos crear procesos concurrentes.
+Cada procesos tiene la capacidad de crear nuevos procesos, donde el proceso creador es llamado
+PADRE y el proceso creador es llamado HIJO. Cada proceso hijo debe mantener el contexto del proceso
+PADRE al momento de ser creado, para esto se debe copiar el contexto entero.
+El hijo "hereda" del padre la memoria (Se copia la memoria de una manera lazy (copy-on-write) es decir
+que la memoria se copiara a medida que el proceso quiera modificarla) y la tabla de FD (File descriptors).
+Los procesos padres e hijos NO comparten PID (cada uno tiene el suyo, son procesos diferentes) ni la memoria.
+
+Para manejar procesos contamos con las funciones:
+- fork(): crea un proceso child nuevo
+- wait(): espera a que todos los procesos hijos terminen
+- exit(): termina el proceso llamante
+
+-- Procesos Cooperativos --
+
+Distintos procesos concurrentes dentro de un sistema operativo pueden ser tanto INDEPEDIENTES, 
+es decir, que ninguno depende del resultado final del otro, o pueden ser COOPERATIVOS, es decir
+que estos SI son afectados o pueden ser afectados por los demás procesos.
+* Todo proceso que comparta datos con otro procesos es un proceso cooperativo*
+
+Razones para la cooperación de procesos:
+ - Información compartida
+ - Aceleración de la computación
+ - Modularidad de programas
+ - Conveniencia 
+
+-- BIBLIOGRAFÍA
+-- Operating Systems Concepts (quinta edición)- Silberschatz, Galvin.
+-- Slides de la cátedra (procesos)
