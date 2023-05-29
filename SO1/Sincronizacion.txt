@@ -153,7 +153,7 @@ Para implementar estos LOCK y UNLOCK de la sección tenemos varias opciones:
 								 El funcionamiento es el siguiente:
 									- Primero, el proceso posee un mutex, es decir ha hecho un lock previo.
 									- Luego, entra en el wait de la variable de condición, donde el lock de libera
-									  con un unlock, y queda disponible para que otro proceso lo tome. El proceso
+									  automáticamente, y queda disponible para que otro proceso lo tome. El proceso
 								          se queda bloqueado.
 									- En el momento en el que se activa la variable de condición, todos los procesos
 									  que se despierten (del wait) compiten por conseguir el lock.
@@ -176,15 +176,15 @@ La implementación de estos semáforos de POSIX es el siguiente:
 - sem_ t : Es el tipo reservado para semáforos.
 - sem_init(sem_t *sem, int pshared, int value): Inicializa un semáforo, si el argumento "pshared" es 0, el semáforo se comparte
 						entre threads, sino se comparte entre procesos. El argumento value indica el valor
-						inicial del semáforo (debe ser mayor a 0)
+						inicial del semáforo (debe ser mayor o igual a 0)
 - sem_destroy(sem_t *sem): Destruye un semáforo
-- sem_wait(sem_t *sem): Realiza una operación wait sobre el semáforo indicado.
-- sem_post(sem_t *sem): Realiza una operación signal sobre el semáforo indicado.
+- sem_wait(sem_t *sem): Realiza una operación wait sobre el semáforo indicado. (Decrementa o bloquea)
+- sem_post(sem_t *sem): Realiza una operación signal sobre el semáforo indicado. (Incrementa)
 
 --
 
 Cabe destacar que las operaciones bloqueantes de todas estas implementaciones de locks y mutexes, no caen en el problema del
-BUSY WAITING, que se da cuando un proceso está continuamente ciclando una condición (con un while por ejemplo) esperando a que
-esto se cumpla. El busy waiting mantiene al proceso vivo y por lo tanto consumiendo energía de la CPU. Los bloqueos propuestos 
-por estas funciones NO mantienen al proceso vivo, sino que lo duermen, permitiendo que la CPU ejecute otros procesos y alivianando 
-su carga.
+BUSY WAITING (únicamente para el caso de spinlock), que se da cuando un proceso está continuamente ciclando una condición
+(con un while por ejemplo) esperando que se cumpla. El busy waiting mantiene al proceso vivo y por lo tanto consumiendo energía de la CPU.
+En cambio, los bloqueos propuestos por estas funciones NO mantienen al proceso vivo, sino que lo duermen, permitiendo que la CPU ejecute
+otros procesos y alivianando su carga.
