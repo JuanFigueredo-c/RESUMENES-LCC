@@ -38,7 +38,7 @@ requerimientos:
 		   su sección crítica.
 
 - Progreso: Si ningún proceso está ejecutando su sección crítica, y algunos procesos desean entrar a su sección crítica
-            correspondiente, entonces solo los procesos que no estén ejecutando sus secciones críticas restantes pueden
+            correspondiente, entonces solo los procesos que no estén ejecutando sus secciones restantes pueden
 	    participar en la decisión de qué procesos será el siguiente en entrar, y esta selección NO puede ser pospuesta
 	    indefinidamente.
 
@@ -165,11 +165,11 @@ Para implementar estos LOCK y UNLOCK de la sección tenemos varias opciones:
 
 Los semáforos son una herramienta capaz de solucionar varios problemas de sincronización de procesos
 entre ellos, el problema de la condición de carrera. En particular, la especificación de los semáforos es la siguiente:
-Un semáforo es un contador entero que es inicializado en un valor arbitrario mayoy o igual a 0. Sobre este semáforo
+Un semáforo es un contador entero que es inicializado en un valor arbitrario mayor o igual a 0. Sobre este semáforo
 se pueden realizar dos operaciones, que deben ser ATÓMICAS, éstas son: signal (post) y wait (wait)
 La operación signal incrementa el contador del semáforo en uno.
 La operación wait realiza dos posibles acciones. Si el contador del semáforo es un número mayor a 0, entonces decrementa
-el contador en uno. Si el contador del semáforo es 0, entonces la wait bloquea al proceso llamante hasta que el contador del 
+el contador en uno. Si el contador del semáforo es 0, entonces la operación wait bloquea al proceso llamante hasta que el contador del 
 semáforo vuelva a ser incrementado.
 La implementación de estos semáforos de POSIX es el siguiente:
 

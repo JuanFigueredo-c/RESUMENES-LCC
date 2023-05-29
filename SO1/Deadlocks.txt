@@ -36,18 +36,18 @@ Solucionar cualquiera de ellas implica liberar al programa de deadlocks sobre es
 -- Métodos para manejar deadlocks
 
  1. Prevención: Modelar el comportamiento del sistema para que elimine toda posibilidad para que no se produzca 
- 		un bloque. Es una implementación SUBÓPTIMA. Se restringen los modos en los que se pueden
+ 		un bloqueo. Es una implementación SUBÓPTIMA. Se restringen los modos en los que se pueden
  		realizar las solicitudes.
  
  2. Evasión: Busca imponer condiciones menos estrictas que en la prevención para intentar una mejor utilización de 	     
  	     los recursos. Requiere que el sistema operativo sepa de antemano qué recursos solicitara y 
  	     utilizará un proceso durante su tiempo de ejecución. 
  	     
- 3. Deteccion y recuperacion: El sistema permite que ocurran los bloqueos, pero busca determinar si ha ocurrido y 
+ 3. Detección y recuperación: El sistema permite que ocurran los bloqueos, pero busca determinar si ha ocurrido y 
  			      tomar medidas para eliminarlos.
  			   
  4. Ignorar el problema:  El sistema no tiene ninguno de los métodos anteriormente descritos. Esto producirá que los
- 			  procesos entrarán en deadlock pero el sistema ni siquiera se enterara y consumirán
+ 			  procesos entren en deadlock pero el sistema ni siquiera se enterará y consumirán
  			  cada vez más recursos. Esto llevará a un deterioro del rendimiento del sistema y eventualmente
  			  dejará de funcionar y solo será solucionado mediante un reinicio manual.
  			  
